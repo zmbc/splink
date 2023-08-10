@@ -399,25 +399,31 @@ class SettingsValidator:
     @property
     def validate_comparison_levels(self):
         # See docstring for `validate_columns_in_sql_string_dict_comp`.
-        invalid_col_tracker = []
-        for comparisons in self.comparisons:
-            # pull out comparison dict
-            comp_dict = comparisons._comparison_dict
-            sql_conds = [cl["sql_condition"] for cl in comp_dict["comparison_levels"]]
+        if not self.comparisons:
+            print("Comparisons Do not exist!")
+            invalid_col_tracker = None
+            print(f"invalid_col_tracker = {type(invalid_col_tracker)}")
+        else:
+            invalid_col_tracker = []
+            for comparisons in self.comparisons:
+                # pull out comparison dict
+                comp_dict = comparisons._comparison_dict
+                sql_conds = [cl["sql_condition"] for cl in comp_dict["comparison_levels"]]
 
-            cl_invalid = self.validate_columns_in_sql_string_dict_comp(
-                sql_conds=sql_conds,
-                prefix_suffix_fun=self.validate_column_suffixes,
-            )
-            if cl_invalid:
-                output_c_name = comp_dict.get("output_column_name")
-                # This needs to be a tuple as output_c_name can be
-                # set to None.
-                output_tuple = (
-                    output_c_name,
-                    cl_invalid,
+                cl_invalid = self.validate_columns_in_sql_string_dict_comp(
+                    sql_conds=sql_conds,
+                    prefix_suffix_fun=self.validate_column_suffixes,
                 )
-                invalid_col_tracker.append(output_tuple)
+                if cl_invalid:
+                    output_c_name = comp_dict.get("output_column_name")
+                    # This needs to be a tuple as output_c_name can be
+                    # set to None.
+                    output_tuple = (
+                        output_c_name,
+                        cl_invalid,
+                    )
+                    invalid_col_tracker.append(output_tuple)
+                    print(output_tuple)
 
         return invalid_col_tracker
 
@@ -485,17 +491,25 @@ class InvalidSettingsLogger(SettingsValidator):
         # 1) The `output_column_name` for the level, if it exists
         # 2) A dictionary in the same format as our blocking rules
         # {sql: [InvalidCols tuples]}
-        logger.warning(
-            f"{colour.BOLD}The following comparison(s) were "
-            f"found to contain invalid column(s):{colour.END}"
-        )
-        for cn, cls in invalid_cls:
-            # Annoyingly, `output_comparison_name` can be None,
-            # so this allows those entries without a name to pass
-            # through.
-            if cn is not None:
-                logger.warning(f"{colour.BOLD}{cn}{colour.END}")
-            self.log_invalid_warnings_within_sql(cls)
+        if invalid_cls:
+            logger.warning(
+                f"{colour.BOLD}The following comparison(s) were "
+                f"found to contain invalid column(s):{colour.END}"
+            )
+            for cn, cls in invalid_cls:
+                # Annoyingly, `output_comparison_name` can be None,
+                # so this allows those entries without a name to pass
+                # through.
+                if cn is not None:
+                    logger.warning(f"{colour.BOLD}{cn}{colour.END}")
+                self.log_invalid_warnings_within_sql(cls)
+        else:
+            logger.warning(
+                f"{colour.BOLD}No comparisons have been found in "
+                f"the settings dictionary. Comparisons are required "
+                f"for all probabilistic Splink models, please consider "
+                f"adding some to the settings dictionary.{colour.END}" 
+            )
 
         logger.warning("\n")
 

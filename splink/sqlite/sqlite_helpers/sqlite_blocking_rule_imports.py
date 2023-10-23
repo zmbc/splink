@@ -5,9 +5,9 @@ from ...blocking_rules_library import (
     exact_match_rule,
 )
 from ...blocking_rules_library import (
-    block_on as _block_on_,
+    _block_on as _block_on_,
 )
-from .sqlite_base import (
+from ...base_classes.sqlite_base import (
     SqliteBase,
 )
 

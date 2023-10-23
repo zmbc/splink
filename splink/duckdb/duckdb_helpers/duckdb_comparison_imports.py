@@ -33,7 +33,7 @@ from ...comparison_template_library import (
     NameComparisonBase,
     PostcodeComparisonBase,
 )
-from .duckdb_base import (
+from ...base_classes.duckdb_base import (
     DuckDBBase,
 )
 

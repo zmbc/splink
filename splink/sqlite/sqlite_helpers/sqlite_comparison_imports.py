@@ -22,7 +22,7 @@ from ...comparison_template_library import (
     ForenameSurnameComparisonBase,
     NameComparisonBase,
 )
-from .sqlite_base import (
+from ...base_classes.sqlite_base import (
     SqliteBase,
 )
 

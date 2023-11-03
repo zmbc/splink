@@ -11,6 +11,7 @@ import sqlglot
 from numpy import nan
 from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.utils import AnalysisException
+from sqlglot.optimizer import optimize
 
 from ..databricks.enable_splink import enable_splink
 from ..input_column import InputColumn
@@ -95,6 +96,7 @@ class SparkLinker(Linker):
         database=None,
         repartition_after_blocking=False,
         num_partitions_on_repartition=None,
+        optimize=False,
     ):
         """Initialise the linker object, which manages the data linkage process and
                 holds the data linkage model.
@@ -134,6 +136,7 @@ class SparkLinker(Linker):
         """
 
         self._sql_dialect_ = "spark"
+        self.optimize = optimize
 
         self.break_lineage_method = break_lineage_method
 
@@ -391,6 +394,10 @@ class SparkLinker(Linker):
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         sql = sqlglot.transpile(sql, read="spark", write="customspark", pretty=True)[0]
+        if self.optimize:
+            tree = sqlglot.parse_one(sql, read="spark")
+            sql = optimize(tree).sql(dialect="spark")
+
         spark_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
         spark_df = self._break_lineage_and_repartition(
             spark_df, templated_name, physical_name

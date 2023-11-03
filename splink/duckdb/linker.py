@@ -1,12 +1,14 @@
 from __future__ import annotations
-
+import time
 import logging
 import os
 from tempfile import TemporaryDirectory
 
 import duckdb
 import pandas as pd
+import sqlglot
 from duckdb import DuckDBPyConnection
+from sqlglot.optimizer import optimize
 
 from ..input_column import InputColumn
 from ..linker import Linker
@@ -106,6 +108,7 @@ class DuckDBLinker(Linker):
         output_schema: str = None,
         input_table_aliases: str | list = None,
         validate_settings: bool = True,
+        optimize: bool = False,
     ):
         """The Linker object manages the data linkage process and holds the data linkage
         model.
@@ -155,6 +158,7 @@ class DuckDBLinker(Linker):
             con = duckdb.connect(database=connection)
 
         self._con = con
+        self.optimize = optimize
 
         # If user has provided pandas dataframes, need to register
         # them with the database, using user-provided aliases
@@ -217,6 +221,16 @@ class DuckDBLinker(Linker):
         AS
         ({sql})
         """
+        start_time = time.time()
+
+        if self.optimize:
+            tree = sqlglot.parse_one(sql, read="duckdb")
+            sql = optimize(tree).sql(dialect="duckdb")
+
+        end_time = time.time()
+
+        print(f"Time taken by optimize call: {end_time - start_time} seconds")
+
         self._log_and_run_sql_execution(sql, templated_name, physical_name)
 
         return DuckDBDataFrame(templated_name, physical_name, self)

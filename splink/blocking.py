@@ -206,11 +206,6 @@ def block_using_rules_sql(linker: Linker):
     so that duplicate comparisons are not generated.
     """
 
-    if type(linker).__name__ in ["SparkLinker"]:
-        apply_salt = True
-    else:
-        apply_salt = False
-
     settings_obj = linker._settings_obj
 
     columns_to_select = settings_obj._columns_to_select_for_blocking
@@ -236,12 +231,6 @@ def block_using_rules_sql(linker: Linker):
         blocking_rules = [settings_obj._blocking_rule_for_training]
     else:
         blocking_rules = settings_obj._blocking_rules_to_generate_predictions
-
-    if settings_obj.salting_required and apply_salt == False:
-        logger.warning(
-            "WARNING: Salting is not currently supported by this linker backend and"
-            " will not be implemented for this run."
-        )
 
     if (
         linker._two_dataset_link_only
@@ -291,10 +280,8 @@ def block_using_rules_sql(linker: Linker):
     for br in blocking_rules:
         # Apply our salted rules to resolve skew issues. If no salt was
         # selected to be added, then apply the initial blocking rule.
-        if apply_salt:
-            salted_blocking_rules = br.salted_blocking_rules
-        else:
-            salted_blocking_rules = [br.blocking_rule]
+
+        salted_blocking_rules = br.salted_blocking_rules
 
         for salted_br in salted_blocking_rules:
             sql = f"""

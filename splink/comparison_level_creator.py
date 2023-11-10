@@ -8,13 +8,16 @@ from .input_column import InputColumn
 
 
 class ComparisonLevelCreator(ABC):
-    def __init__(self, col_name: str = None):
+    def __init__(self, col_name: str, **kwargs):
         """
         Class to author ComparisonLevels
         Args:
             col_name (str): Input column name
         """
         self.col_name = col_name
+
+        for key, value in kwargs.items():
+            setattr(self, f"_{key}", value)
 
     @abstractmethod
     def create_sql(self, sql_dialect: SplinkDialect) -> str:

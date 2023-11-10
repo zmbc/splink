@@ -40,6 +40,9 @@ class ExactMatchLevel(ComparisonLevelCreator):
             col_name (str): Input column name
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
+            regex_extract (str, optional): Regular expression pattern to evaluate
+                a match on.
+            set_to_lowercase (bool, optional): If True, sets all entries to lowercase.
 
         """
 
@@ -62,8 +65,16 @@ class ExactMatchLevel(ComparisonLevelCreator):
         return f"Exact match on {self.col_name}"
 
 
+@regex_extract_col
+@lowercase_col
 class LevenshteinLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, distance_threshold: int):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold: int,
+        regex_extract: str = None,
+        set_to_lowercase: bool = False,
+    ):
         """A comparison level using a levenshtein distance function
 
         e.g. levenshtein(val_l, val_r) <= distance_threshold
@@ -72,9 +83,14 @@ class LevenshteinLevel(ComparisonLevelCreator):
             col_name (str): Input column name
             distance_threshold (int): The threshold to use to assess
                 similarity
+            regex_extract (str, optional): Regular expression pattern to evaluate
+                a match on.
+            set_to_lowercase (bool, optional): If True, sets all entries to lowercase.
         """
         super().__init__(col_name)
         self.distance_threshold = distance_threshold
+        self._regex_extract_str = regex_extract
+        self._set_to_lowercase = set_to_lowercase
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         col = self.input_column(sql_dialect)
@@ -85,8 +101,16 @@ class LevenshteinLevel(ComparisonLevelCreator):
         return f"Levenshtein distance of {self.col_name} <= {self.distance_threshold}"
 
 
+@regex_extract_col
+@lowercase_col
 class JaroWinklerLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, distance_threshold: Union[int, float]):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold: Union[int, float],
+        regex_extract: str = None,
+        set_to_lowercase: bool = False,
+    ):
         """A comparison level using a Jaro-Winkler distance function
 
         e.g. `jaro_winkler(val_l, val_r) >= distance_threshold`
@@ -95,9 +119,14 @@ class JaroWinklerLevel(ComparisonLevelCreator):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            regex_extract (str, optional): Regular expression pattern to evaluate
+                a match on.
+            set_to_lowercase (bool, optional): If True, sets all entries to lowercase.
         """
         super().__init__(col_name)
         self.distance_threshold = distance_threshold
+        self._regex_extract_str = regex_extract
+        self._set_to_lowercase = set_to_lowercase
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         col_l, col_r = self.input_column(sql_dialect).names_l_r()

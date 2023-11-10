@@ -51,6 +51,10 @@ class ComparisonLevelCreator(ABC):
     def input_column(self, sql_dialect: SplinkDialect) -> InputColumn:
         return InputColumn(self.col_name, sql_dialect=sql_dialect.sqlglot_name)
 
+    def cols_l_r(self, sql_dialect: SplinkDialect) -> [str, str]:
+        col_signature = self.input_column(sql_dialect)
+        return col_signature.names_l_r()
+
     @final
     def configure(
         self,

@@ -15,6 +15,12 @@ class SplinkDialect(ABC):
         return _dialect_lookup[dialect_name]
 
     @property
+    def regex_extract(self):
+        raise NotImplementedError(
+            "Regex extract option not defined for the SQL backend being used."
+        )
+
+    @property
     def levenshtein_function_name(self):
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'Levenshtein' function"
@@ -40,6 +46,10 @@ class DuckDBDialect(SplinkDialect):
     def jaro_winkler_function_name(self):
         return "jaro_winkler_similarity"
 
+    @property
+    def regex_extract(self):
+        return "regexp_extract({col}, '{regex}')"
+
 
 class SparkDialect(SplinkDialect):
     @property
@@ -53,6 +63,10 @@ class SparkDialect(SplinkDialect):
     @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler"
+
+    @property
+    def regex_extract(self):
+        return "regexp_extract({col}, '{regex}', 0)"
 
 
 class SqliteDialect(SplinkDialect):
@@ -89,6 +103,10 @@ class AthenaDialect(SplinkDialect):
     @property
     def sqlglot_name(self):
         return "presto"
+
+    @property
+    def regex_extract(self):
+        return "regexp_extract({col}, '{regex}')"
 
     @property
     def _levenshtein_name(self):

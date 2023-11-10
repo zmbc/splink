@@ -2,6 +2,7 @@ from typing import Union
 
 from .comparison_level_creator import ComparisonLevelCreator
 from .dialects import SplinkDialect
+from .comparison_level_extenders import regex_extract_col, lowercase_col
 
 
 class NullLevel(ComparisonLevelCreator):
@@ -21,8 +22,16 @@ class ElseLevel(ComparisonLevelCreator):
         return "All other comparisons"
 
 
+@regex_extract_col
+@lowercase_col
 class ExactMatchLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, term_frequency_adjustments: bool = False):
+    def __init__(
+        self,
+        col_name: str,
+        term_frequency_adjustments: bool = False,
+        regex_extract: str = None,
+        set_to_lowercase: bool = False,
+    ):
         """Represents a comparison level where there is an exact match
 
         e.g. val_l = val_r
@@ -33,6 +42,10 @@ class ExactMatchLevel(ComparisonLevelCreator):
                 adjustments to the exact match level. Defaults to False.
 
         """
+
+        self._regex_extract_str = regex_extract
+        self._set_to_lowercase = set_to_lowercase
+
         config = {}
         if term_frequency_adjustments:
             config["tf_adjustment_column"] = col_name
@@ -42,8 +55,8 @@ class ExactMatchLevel(ComparisonLevelCreator):
         self.configure(**config)
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = self.input_column(sql_dialect)
-        return f"{col.name_l()} = {col.name_r()}"
+        col_l, col_r = self.cols_l_r(sql_dialect)
+        return f"{col_l} = {col_r}"
 
     def create_label_for_charts(self) -> str:
         return f"Exact match on {self.col_name}"

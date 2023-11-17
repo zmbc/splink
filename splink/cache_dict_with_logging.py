@@ -46,6 +46,15 @@ class CacheDictWithLogging(UserDict):
     def reset_executed_queries_tracker(self):
         self.executed_queries = []
 
+    def find_templated_names(self, templated_names_to_find: list[str]) -> bool:
+
+        for templated_name in templated_names_to_find:
+            for physical_name, splink_dataframe in self.data.items():
+                if templated_name == splink_dataframe.templated_name:
+                    return physical_name
+
+        return None
+
     def is_in_executed_queries(
         self, name_to_find, search_physical=True, search_templated=True
     ):

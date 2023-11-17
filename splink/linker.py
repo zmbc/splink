@@ -537,11 +537,11 @@ class Linker:
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
-        concat_df = None
-        if "__splink__df_concat" in cache:
-            concat_df = cache.get_with_logging("__splink__df_concat")
-        elif "__splink__df_concat_with_tf" in cache:
-            concat_df = cache.get_with_logging("__splink__df_concat_with_tf")
+        cache_templated_table_names = ["__splink__df_concat", "__splink__df_concat_with_tf"]
+        concat_df = cache.find_templated_names(cache_templated_table_names)
+
+        if concat_df:  # if a table we can use is already cached, extract it
+            concat_df = cache.get_with_logging(concat_df)
             concat_df.templated_name = "__splink__df_concat"
         else:
             if materialise:
@@ -553,16 +553,14 @@ class Linker:
             self._enqueue_sql(sql, "__splink__df_concat")
             if materialise:
                 concat_df = self._execute_sql_pipeline()
-                cache["__splink__df_concat"] = concat_df
 
         return concat_df
 
     def _initialise_df_concat_with_tf(self, materialise=True):
         cache = self._intermediate_table_cache
-        nodes_with_tf = None
-        if "__splink__df_concat_with_tf" in cache:
-            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
-
+        nodes_with_tf = cache.find_templated_names(["__splink__df_concat_with_tf"])
+        if nodes_with_tf:
+            nodes_with_tf = cache.get_with_logging(nodes_with_tf)
         else:
             if materialise:
                 # Clear the pipeline if we are materialising
@@ -579,7 +577,6 @@ class Linker:
 
             if materialise:
                 nodes_with_tf = self._execute_sql_pipeline()
-                cache["__splink__df_concat_with_tf"] = nodes_with_tf
 
         # verify the link job
         if self._settings_obj_ is not None:
@@ -1305,36 +1302,38 @@ class Linker:
             SplinkDataFrame: The resultant table as a splink data frame
         """
 
+        cache = self._intermediate_table_cache
+
         input_col = InputColumn(column_name, settings_obj=self._settings_obj)
         tf_tablename = colname_to_tf_tablename(input_col)
-        cache = self._intermediate_table_cache
+        # Get the list of term frequency columns requested in the settings object.
         concat_tf_tables = [
             remove_quotes_from_identifiers(tf_col.input_name_as_tree).sql()
             for tf_col in self._settings_obj._term_frequency_columns
         ]
+        concat_w_tf_physical_name = cache.find_templated_names(["__splink__df_concat_with_tf"])
+
 
         if tf_tablename in cache:
             tf_df = cache.get_with_logging(tf_tablename)
-        elif "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
+        elif concat_w_tf_physical_name and column_name in concat_tf_tables:
             self._pipeline.reset()
-            # If our df_concat_with_tf table already exists, use backwards inference to
-            # find a given tf table
-            colname = InputColumn(column_name)
-            sql = term_frequencies_from_concat_with_tf(colname)
-            self._enqueue_sql(sql, colname_to_tf_tablename(colname))
-            tf_df = self._execute_sql_pipeline([cache["__splink__df_concat_with_tf"]])
-            self._intermediate_table_cache[tf_tablename] = tf_df
+            # If our df_concat_with_tf table already exists infer the
+            # column's term frequency table by finding a distinct count of both the
+            # column's values and term frequency mappings
+            sql = term_frequencies_from_concat_with_tf(input_col)
+            self._enqueue_sql(sql, colname_to_tf_tablename(input_col))
+            tf_df = self._execute_sql_pipeline([cache[concat_w_tf_physical_name]])
         else:
             # Clear the pipeline if we are materialising
             self._pipeline.reset()
-            df_concat = self._initialise_df_concat()
+            df_concat = self._initialise_df_concat()  # Queues SQL or returns a df reference
             input_dfs = []
             if df_concat:
                 input_dfs.append(df_concat)
             sql = term_frequencies_for_single_column_sql(input_col)
             self._enqueue_sql(sql, tf_tablename)
             tf_df = self._execute_sql_pipeline(input_dfs)
-            self._intermediate_table_cache[tf_tablename] = tf_df
 
         return tf_df
 

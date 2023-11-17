@@ -3665,14 +3665,33 @@ class Linker:
             overwrite (bool): Overwrite the table in the underlying database if it
                 exists
         """
+        cache = self._intermediate_table_cache
+        table_name_physical = cache.find_templated_names(["__splink__df_concat_with_tf"])
+        # If a concat_with_tf table hasn't already been registered, create a hashed name
+        if table_name_physical is None:
+            table_name_physical = "__splink__df_concat_with_tf_" + self._cache_uid
 
-        table_name_physical = "__splink__df_concat_with_tf_" + self._cache_uid
         splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
-        splink_dataframe.templated_name = "__splink__df_concat_with_tf"
 
-        self._intermediate_table_cache["__splink__df_concat_with_tf"] = splink_dataframe
+        self._intermediate_table_cache[table_name_physical] = splink_dataframe
+        return splink_dataframe
+
+    def register_term_frequency_lookup(self, input_data, col_name, overwrite=False):
+        cache = self._intermediate_table_cache
+        input_col = InputColumn(col_name, settings_obj=self._settings_obj)
+        table_name_templated = colname_to_tf_tablename(input_col)
+        # Check whether a tf table for col_name already exists
+        table_name_physical = cache.find_templated_names([table_name_templated])
+        if table_name_physical is None:
+            table_name_physical = f"{table_name_templated}_{self._cache_uid}"
+
+        splink_dataframe = self.register_table(
+            input_data, table_name_physical, overwrite=overwrite
+        )
+        self._intermediate_table_cache[table_name_physical] = splink_dataframe
+        splink_dataframe.templated_name = table_name_templated
         return splink_dataframe
 
     def register_table_predict(self, input_data, overwrite=False):
@@ -3682,17 +3701,6 @@ class Linker:
         )
         self._intermediate_table_cache["__splink__df_predict"] = splink_dataframe
         splink_dataframe.templated_name = "__splink__df_predict"
-        return splink_dataframe
-
-    def register_term_frequency_lookup(self, input_data, col_name, overwrite=False):
-        input_col = InputColumn(col_name, settings_obj=self._settings_obj)
-        table_name_templated = colname_to_tf_tablename(input_col)
-        table_name_physical = f"{table_name_templated}_{self._cache_uid}"
-        splink_dataframe = self.register_table(
-            input_data, table_name_physical, overwrite=overwrite
-        )
-        self._intermediate_table_cache[table_name_templated] = splink_dataframe
-        splink_dataframe.templated_name = table_name_templated
         return splink_dataframe
 
     def register_labels_table(self, input_data, overwrite=False):

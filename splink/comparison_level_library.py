@@ -46,7 +46,13 @@ class ElseLevel(ComparisonLevelCreator):
 
 
 class ExactMatchLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: str, term_frequency_adjustments: bool = False):
+    def __init__(
+        self,
+        col_name: str,
+        term_frequency_adjustments: bool = False,
+        regex_extract: str = None,
+        set_to_lowercase: bool = False,
+    ):
         """Represents a comparison level where there is an exact match
 
         e.g. val_l = val_r
@@ -57,6 +63,9 @@ class ExactMatchLevel(ComparisonLevelCreator):
                 adjustments to the exact match level. Defaults to False.
 
         """
+        self.regex_extract = regex_extract
+        self.set_to_lowercase = set_to_lowercase
+
         config = {}
         if term_frequency_adjustments:
             config["tf_adjustment_column"] = col_name
@@ -66,11 +75,15 @@ class ExactMatchLevel(ComparisonLevelCreator):
         self.configure(**config)
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = self.input_column(sql_dialect)
+        col = (
+            self.input_column(sql_dialect)
+            .lowercase_column(self.set_to_lowercase)
+            .regex_extract(self.regex_extract)
+        )
         return f"{col.name_l} = {col.name_r}"
 
     def create_label_for_charts(self) -> str:
-        return f"Exact match on {self.col_name}"
+        return f"Exact match on '{self.col_name}'"
 
 
 class ColumnsReversedLevel(ComparisonLevelCreator):
@@ -158,26 +171,23 @@ class DatediffLevel(ComparisonLevelCreator):
         if self.date_metric not in ("day", "month", "year"):
             raise ValueError("`date_metric` must be one of ('day', 'month', 'year')")
 
-        sqlglot_dialect_name = sql_dialect.sqlglot_name
-        date_col = InputColumn(self.col_name)
-        date_col_l, date_col_r = date_col.names_l_r
+        date_col = self.input_column(sql_dialect).str_to_date(
+            self.cast_strings_to_date, self.date_format
+        )
+        date_col_l, date_col_r = date_col.as_base_dialect.names_l_r
 
         if hasattr(sql_dialect, "date_diff"):
-            return sql_dialect.date_diff(self)
-
-        if self.cast_strings_to_date:
-            date_col_l = f"STR_TO_TIME({date_col_l}, '{self.date_format}')"
-            date_col_r = f"STR_TO_TIME({date_col_r}, '{self.date_format}')"
+            return sql_dialect.date_diff(self, date_col_l, date_col_r)
 
         sqlglot_base_dialect_sql = (
             f"ABS(DATE_DIFF({date_col_l}, "
-            f"{date_col_r}, '{self.date_metric}'))"
+            f"{date_col_r}, '{self.date_metric}')) "
             f"<= {self.date_threshold}"
         )
 
         tree = parse_one(sqlglot_base_dialect_sql)
 
-        return tree.sql(dialect=sqlglot_dialect_name)
+        return tree.sql(dialect=sql_dialect.sqlglot_name)
 
     def create_label_for_charts(self) -> str:
         return (

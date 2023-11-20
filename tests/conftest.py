@@ -23,7 +23,6 @@ from tests.helpers import (
 
 logger = logging.getLogger(__name__)
 
-
 def pytest_collection_modifyitems(items, config):
     # any tests without backend-group markers will always run
     marks = {gp for groups in dialect_groups.values() for gp in groups}

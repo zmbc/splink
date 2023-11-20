@@ -7,8 +7,8 @@ from splink.analyse_blocking import (
 from splink.blocking import BlockingRule
 from splink.duckdb.linker import DuckDBLinker
 
-from .basic_settings import get_settings_dict
-from .decorator import mark_with_dialects_excluding
+from ..basic_settings import get_settings_dict
+from ..decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()

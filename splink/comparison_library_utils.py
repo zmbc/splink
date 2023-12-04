@@ -1,3 +1,6 @@
+import itertools
+from typing import Iterable
+
 from .misc import ensure_is_iterable
 
 
@@ -72,13 +75,14 @@ def distance_threshold_comparison_levels(
     higher_is_more_similar: bool = True,
     include_colname_in_charts_label=False,
     manual_col_name_for_charts_label=None,
-    m_probability_or_probabilities_thres: list = None,
+    m_probability_or_probabilities_thres: Iterable = None,
 ):
     thresholds = ensure_is_iterable(distance_threshold_or_thresholds)
     threshold_comparison_levels = []
 
     if m_probability_or_probabilities_thres is None:
-        m_probability_or_probabilities_thres = [None] * len(thresholds)
+        # use itertools.cycle as thresholds may not have a len()
+        m_probability_or_probabilities_thres = itertools.cycle([None])
     m_probability_or_probabilities_thres = ensure_is_iterable(
         m_probability_or_probabilities_thres
     )

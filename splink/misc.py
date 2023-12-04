@@ -41,11 +41,11 @@ def normalise(vals):
     return [v / sum(vals) for v in vals]
 
 
-def ensure_is_iterable(a):
+def ensure_is_iterable(a) -> Iterable:
     return a if isinstance(a, Iterable) else [a]
 
 
-def ensure_is_list(a):
+def ensure_is_list(a) -> list:
     return a if isinstance(a, list) else [a]
 
 

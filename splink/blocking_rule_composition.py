@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import Any
 
 from .blocking import BlockingRule, blocking_rule_to_obj
 from .comparison_level_composition import _unify_sql_dialects
@@ -293,11 +294,11 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
             stacklevel=2,
         )
 
-    brls, sql_dialect, salt = _parse_blocking_rules(*brls)
-    br = brls[0]
+    parsed_rules, sql_dialect, salt = _parse_blocking_rules(*brls)
+    br = parsed_rules[0]
     blocking_rule = f"NOT ({br.blocking_rule_sql})"
 
-    br_dict = {
+    br_dict: dict[str, Any] = {
         "blocking_rule": blocking_rule,
         "sql_dialect": sql_dialect,
     }
@@ -326,12 +327,12 @@ def _br_merge(
 
     blocking_rule = f" {clause} ".join(conditions)
 
-    br_dict = {
+    br_dict: dict[str, Any] = {
         "blocking_rule": blocking_rule,
         "sql_dialect": sql_dialect,
     }
 
-    if salting_partitions > 1:
+    if salting_partitions is not None and salting_partitions > 1:
         salt = salting_partitions
     if salt > 1:
         br_dict["salting_partitions"] = salt
@@ -341,12 +342,14 @@ def _br_merge(
 
 def _parse_blocking_rules(
     *brs: BlockingRule | dict | str,
-) -> tuple[list[BlockingRule], str | None]:
-    brs = [_to_blocking_rule(br) for br in brs]
-    sql_dialect = _unify_sql_dialects(brs)
-    salting_partitions = max([getattr(br, "salting_partitions", 1) for br in brs])
-    return brs, sql_dialect, salting_partitions
+) -> tuple[list[BlockingRule], str | None, int]:
+    blocking_rules = [_to_blocking_rule(br) for br in brs]
+    sql_dialect = _unify_sql_dialects(blocking_rules)
+    salting_partitions = max(
+        [getattr(br, "salting_partitions", 1) for br in blocking_rules]
+    )
+    return blocking_rules, sql_dialect, salting_partitions
 
 
-def _to_blocking_rule(br):
+def _to_blocking_rule(br) -> BlockingRule:
     return blocking_rule_to_obj(br)

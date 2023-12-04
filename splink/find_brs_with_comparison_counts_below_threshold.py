@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Dict, List, Set
 import pandas as pd
 
 from .blocking import BlockingRule
-from .input_column import InputColumn
 
 if TYPE_CHECKING:
     from .linker import Linker
@@ -223,21 +222,17 @@ def find_blocking_rules_below_threshold_comparison_count(
     """
 
     if not column_expressions:
-        column_expressions = linker._input_columns(
+        column_expressions_as_input_columns = linker._input_columns(
             include_unique_id_col_names=False,
             include_additional_columns_to_retain=False,
         )
-
-    column_expressions_as_strings = []
-
-    for c in column_expressions:
-        if isinstance(c, InputColumn):
-            column_expressions_as_strings.append(c.quote().name)
-        else:
-            column_expressions_as_strings.append(c)
+        column_expressions = [
+            c.quote().name
+            for c in column_expressions_as_input_columns
+        ]
 
     results = _search_tree_for_blocking_rules_below_threshold_count(
-        linker, column_expressions_as_strings, max_comparisons_per_rule
+        linker, column_expressions, max_comparisons_per_rule
     )
 
     if not results:

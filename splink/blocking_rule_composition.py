@@ -285,7 +285,7 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
     if len(brls) == 0:
         raise ValueError("You must provide at least one BlockingRule")
     elif len(brls) > 1:
-        warnings.warning(
+        warnings.warn(
             "More than one BlockingRule entered for `NOT` composition. "
             "This function only accepts one argument and will only use your "
             "first BlockingRule.",

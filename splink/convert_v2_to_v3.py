@@ -182,8 +182,6 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict) -> dict:
         else:
             u = [None] * (len(parsed) + 1)
 
-        comparison_3 = {"comparison_levels": []}
-
         comparison_3 = _parsed_to_v3_comparison(comparison_column, parsed, m, u)
 
         comparisons_3.append(comparison_3)

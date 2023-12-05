@@ -18,6 +18,7 @@ from .exceptions import EMTrainingException
 from .expectation_maximisation import expectation_maximisation
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
+from .settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +111,7 @@ class EMTrainingSession:
         self._settings_obj.comparisons = filtered_ccs
         self._comparisons_that_can_be_estimated = filtered_ccs
 
-        self._settings_obj_history = []
+        self._settings_obj_history: list[Settings] = []
 
         # Add iteration 0 i.e. the starting parameters
         self._add_iteration()

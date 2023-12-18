@@ -227,8 +227,7 @@ def find_blocking_rules_below_threshold_comparison_count(
             include_additional_columns_to_retain=False,
         )
         column_expressions = [
-            c.quote().name
-            for c in column_expressions_as_input_columns
+            c.quote().name for c in column_expressions_as_input_columns
         ]
 
     results = _search_tree_for_blocking_rules_below_threshold_count(

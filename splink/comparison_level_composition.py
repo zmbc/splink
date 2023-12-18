@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Dict, Any
+from typing import Any, Dict, Iterable
 
 from .blocking import BlockingRule
 from .comparison_level import ComparisonLevel

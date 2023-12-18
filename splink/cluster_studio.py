@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import random
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from jinja2 import Template
 
@@ -117,7 +117,7 @@ def df_edges_as_records(
 
 def _get_random_cluster_ids(
     linker: "Linker", connected_components: SplinkDataFrame, sample_size: int, seed=None
-):
+) -> List:
     sql = f"""
     select count(distinct cluster_id) as count
     from {connected_components.physical_name}
@@ -156,7 +156,7 @@ def _get_random_cluster_ids(
 
 def _get_cluster_id_of_each_size(
     linker: "Linker", connected_components: SplinkDataFrame, rows_per_cluster: int
-):
+) -> List[Dict]:
     sql = f"""
     select cluster_id, count(*) as cluster_size,
         max({linker._settings_obj._unique_id_column_name}) as ordering
@@ -209,22 +209,30 @@ def render_splink_cluster_studio_html(
     named_clusters_dict = None
     if cluster_ids is None:
         if sampling_method == "random":
-            cluster_ids = _get_random_cluster_ids(
+            cluster_ids_for_records = _get_random_cluster_ids(
                 linker, df_clustered_nodes, sample_size, sample_seed
             )
         if sampling_method == "by_cluster_size":
-            cluster_ids = _get_cluster_id_of_each_size(linker, df_clustered_nodes, 1)
-            if len(cluster_ids) > sample_size:
-                cluster_ids = random.sample(cluster_ids, k=sample_size)
+            clusters_info = _get_cluster_id_of_each_size(
+                linker, df_clustered_nodes, 1
+            )
+            if len(clusters_info) > sample_size:
+                clusters_info = random.sample(
+                    clusters_info, k=sample_size
+                )
             cluster_names = [
                 f"Cluster ID: {c['cluster_id']}, size  {c['cluster_size']}"
-                for c in cluster_ids
+                for c in clusters_info
             ]
-            cluster_ids = [c["cluster_id"] for c in cluster_ids]
-            named_clusters_dict = dict(zip(cluster_ids, cluster_names))
+            cluster_ids_for_records = [c["cluster_id"] for c in clusters_info]
+            named_clusters_dict = dict(zip(cluster_ids_for_records, cluster_names))
+    else:
+        cluster_ids_for_records = cluster_ids
 
-    cluster_recs = df_clusters_as_records(linker, df_clustered_nodes, cluster_ids)
-    df_nodes = create_df_nodes(linker, df_clustered_nodes, cluster_ids)
+    cluster_recs = df_clusters_as_records(
+        linker, df_clustered_nodes, cluster_ids_for_records
+    )
+    df_nodes = create_df_nodes(linker, df_clustered_nodes, cluster_ids_for_records)
     nodes_recs = df_nodes.as_record_dict()
     edges_recs = df_edges_as_records(linker, df_predicted_edges, df_nodes)
 
@@ -243,7 +251,7 @@ def render_splink_cluster_studio_html(
     }
 
     if cluster_names:
-        named_clusters_dict = dict(zip(cluster_ids, cluster_names))
+        named_clusters_dict = dict(zip(cluster_ids_for_records, cluster_names))
 
     if named_clusters_dict:
         template_data["named_clusters"] = json.dumps(

@@ -17,7 +17,8 @@ def _add_l_or_r_to_identifier(node: exp.Expression):
         # node is the `x` in the lambda `x -> list_contains(r.name_list, x))`
         parent_table = ""
     else:
-        parent_table = p.table
+        # ignore missing attribute errors as dependent on sqlglot version
+        parent_table = p.table  # type: ignore[union-attr]
 
     if parent_table != "":
         l_r = "_" + parent_table

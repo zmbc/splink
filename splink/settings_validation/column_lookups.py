@@ -45,14 +45,14 @@ class InvalidColValidator(SettingsValidator):
         return InvalidCols(invalid_type, missing_cols)
 
     def clean_and_return_missing_columns(
-        self, cols: list[sqlglot.expressions]
     ) -> list[InvalidCols]:
+        self, cols: list[sqlglot.Expression]
         """Clean a list of sqlglot column names to remove the prefix (l.)
         and suffix (_l) and then return any that are missing from the
         input dataframe(s).
 
         Args:
-            cols (list[sqlglot.expressions]): A list of columns given as
+            cols (list[sqlglot.Expression]): A list of columns given as
                 sqlglot expressions
 
         Returns:
@@ -62,13 +62,13 @@ class InvalidColValidator(SettingsValidator):
         cleaned_cols = set(self.remove_prefix_and_suffix_from_column(c) for c in cols)
         return self.return_missing_columns(cleaned_cols)
 
-    def validate_table_names(self, cols: list[sqlglot.expressions]) -> InvalidCols:
+    def validate_table_names(self, cols: list[sqlglot.Expression]) -> InvalidCols:
         """Validate a series of table names assigned to columns extracted from
         SQL statements. Here, we expect all columns to be assigned either a `l` or
         `r` prefix.
 
         Args:
-            cols (list[sqlglot.expressions]): A list of columns given as
+            cols (list[sqlglot.Expression]): A list of columns given as
                 sqlglot expressions
 
         Returns:
@@ -81,12 +81,12 @@ class InvalidColValidator(SettingsValidator):
         invalid_cols = [c.sql() for c in cols if c.table not in ["l", "r"]]
         return InvalidCols(invalid_type, invalid_cols)
 
-    def validate_column_suffixes(self, cols: list[sqlglot.expressions]) -> InvalidCols:
+    def validate_column_suffixes(self, cols: list[sqlglot.Expression]) -> InvalidCols:
         """Validate a series of column suffixes. Here, we expect columns to be suffixed
         with either `_l` or `_r`. Where this is missing, flag it as an error.
 
         Args:
-            cols (list[sqlglot.expressions]): A list of columns given as
+            cols (list[sqlglot.Expression]): A list of columns given as
                 sqlglot expressions
 
         Returns:

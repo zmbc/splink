@@ -104,7 +104,7 @@ class SettingsValidator:
         return set(remove_quotes_from_identifiers(tree).sql() for tree in col_list)
 
     def remove_prefix_and_suffix_from_column(
-        self, col_syntax_tree: sqlglot.expressions
+        self, col_syntax_tree: sqlglot.Expression
     ):
         """Remove the prefix and suffix from a given sqlglot syntax tree
         and return it as a string of SQL.

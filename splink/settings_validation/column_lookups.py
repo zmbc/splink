@@ -164,6 +164,10 @@ class InvalidColValidator(SettingsValidator):
         if missing_cols.contains_invalid_columns:
             return settings_id, missing_cols
 
+    @property
+    def input_columns(self):
+        return self._input_columns
+
 
 class InvalidColumnsLogger(InvalidColValidator):
     """Takes the methods created in `InvalidColValidator`
@@ -173,7 +177,6 @@ class InvalidColumnsLogger(InvalidColValidator):
 
     def __init__(self, linker):
         self.settings_validator = super().__init__(linker)
-        self.input_columns = self._input_columns
 
         # These are extracted in the inherited
         # SettingsValidator class

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Dict, Any
 
 from .blocking import BlockingRule
 from .comparison_level import ComparisonLevel
@@ -353,7 +353,7 @@ def not_(
     """
     cls, sql_dialect = _parse_comparison_levels(cll)
     cl = cls[0]
-    result = {}
+    result: Dict[str, Any] = {}
     result["sql_condition"] = f"NOT ({cl.sql_condition})"
 
     # Invert if is_null_level.
@@ -382,7 +382,7 @@ def _cl_merge(
         raise ValueError("Must provide at least one ComparisonLevel")
 
     cls, sql_dialect = _parse_comparison_levels(*clls)
-    result = {}
+    result: Dict[str, Any] = {}
     conditions = ("(" + cl.sql_condition + ")" for cl in cls)
     result["sql_condition"] = f" {clause} ".join(conditions)
 
@@ -405,9 +405,9 @@ def _cl_merge(
 def _parse_comparison_levels(
     *cls: ComparisonLevel | dict,
 ) -> tuple[list[ComparisonLevel], str | None]:
-    cls = [_to_comparison_level(cl) for cl in cls]
-    sql_dialect = _unify_sql_dialects(cls)
-    return cls, sql_dialect
+    comparison_levels = [_to_comparison_level(cl) for cl in cls]
+    sql_dialect = _unify_sql_dialects(comparison_levels)
+    return comparison_levels, sql_dialect
 
 
 def _to_comparison_level(cl: ComparisonLevel | dict) -> ComparisonLevel:

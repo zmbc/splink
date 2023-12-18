@@ -213,13 +213,9 @@ def render_splink_cluster_studio_html(
                 linker, df_clustered_nodes, sample_size, sample_seed
             )
         if sampling_method == "by_cluster_size":
-            clusters_info = _get_cluster_id_of_each_size(
-                linker, df_clustered_nodes, 1
-            )
+            clusters_info = _get_cluster_id_of_each_size(linker, df_clustered_nodes, 1)
             if len(clusters_info) > sample_size:
-                clusters_info = random.sample(
-                    clusters_info, k=sample_size
-                )
+                clusters_info = random.sample(clusters_info, k=sample_size)
             cluster_names = [
                 f"Cluster ID: {c['cluster_id']}, size  {c['cluster_size']}"
                 for c in clusters_info

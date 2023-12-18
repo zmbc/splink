@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 
 import sqlglot
 import sqlglot.expressions as exp
@@ -46,7 +46,7 @@ def get_columns_used_from_sql(sql, dialect=None, retain_table_prefix=False):
 
 def parse_columns_in_sql(
     sql: str, sql_dialect: str, remove_quotes=True
-) -> Optional[list[sqlglot.Expression]]:
+) -> Optional[list[sqlglot.expressions.Column]]:
     """Extract all columns found within a SQL expression.
 
     Args:
@@ -63,8 +63,10 @@ def parse_columns_in_sql(
         # If we can't parse a SQL condition, it's better to just pass.
         return None
 
-    return [
+    cols = []
+    for expression in syntax_tree.find_all(exp.Column):
+        # We know that it is _really_ a Column, but need to tell mypy
+        col = cast(sqlglot.expressions.Column, expression)
         # Remove quotes if requested by the user
-        remove_quotes_from_identifiers(col) if remove_quotes else col
-        for col in syntax_tree.find_all(exp.Column)
-    ]
+        cols.append(remove_quotes_from_identifiers(col) if remove_quotes else col)
+    return cols

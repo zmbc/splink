@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import overload
 
 import sqlglot
 import sqlglot.expressions as exp
 from sqlglot.errors import ParseError
-from sqlglot.expressions import Expression
+from sqlglot.expressions import Column, Expression
 
 from .default_from_jsonschema import default_value_from_schema
 
@@ -46,7 +47,17 @@ def add_table(tree, tablename) -> Expression:
     return tree
 
 
-def remove_quotes_from_identifiers(tree) -> Expression:
+@overload
+def remove_quotes_from_identifiers(tree: Column) -> Column:
+    ...
+
+
+@overload
+def remove_quotes_from_identifiers(tree: Expression) -> Expression:
+    ...
+
+
+def remove_quotes_from_identifiers(tree):
     tree = tree.copy()
     for identifier in tree.find_all(exp.Identifier):
         identifier.args["quoted"] = False

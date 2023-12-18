@@ -45,8 +45,8 @@ class InvalidColValidator(SettingsValidator):
         return InvalidCols(invalid_type, missing_cols)
 
     def clean_and_return_missing_columns(
-    ) -> list[InvalidCols]:
         self, cols: list[sqlglot.Expression]
+    ) -> InvalidCols:
         """Clean a list of sqlglot column names to remove the prefix (l.)
         and suffix (_l) and then return any that are missing from the
         input dataframe(s).
@@ -62,7 +62,9 @@ class InvalidColValidator(SettingsValidator):
         cleaned_cols = set(self.remove_prefix_and_suffix_from_column(c) for c in cols)
         return self.return_missing_columns(cleaned_cols)
 
-    def validate_table_names(self, cols: list[sqlglot.Expression]) -> InvalidCols:
+    def validate_table_names(
+        self, cols: list[sqlglot.expressions.Column]
+    ) -> InvalidCols:
         """Validate a series of table names assigned to columns extracted from
         SQL statements. Here, we expect all columns to be assigned either a `l` or
         `r` prefix.

@@ -5,7 +5,7 @@ import math
 import re
 from statistics import median
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import sqlglot
 from sqlglot.expressions import Identifier
@@ -141,7 +141,8 @@ class ComparisonLevel:
         # Protected, because we don't want to modify the original dict
         self._level_dict = level_dict
 
-        self.comparison: Comparison = comparison
+        # TODO: will need refactor to fix this:
+        self.comparison: Comparison = comparison  # type: ignore[assignment]
         if not hasattr(self, "_sql_dialect"):
             self._sql_dialect = sql_dialect
 
@@ -160,8 +161,8 @@ class ComparisonLevel:
         self._u_probability = self._level_dict.get("u_probability")
 
         # These will be set when the ComparisonLevel is passed into a Comparison
-        self._comparison_vector_value: int = None
-        self._max_level: bool = None
+        self._comparison_vector_value: Optional[int] = None
+        self._max_level: Optional[bool] = None
 
         # Enable the level to 'know' when it's been trained
         self._trained_m_probabilities: list = []

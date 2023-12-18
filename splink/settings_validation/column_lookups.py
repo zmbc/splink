@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
-from typing import NamedTuple
+from typing import Callable, Dict, List, NamedTuple
 
 import sqlglot
 
@@ -103,9 +103,9 @@ class InvalidColValidator(SettingsValidator):
 
     def validate_columns_in_sql_strings(
         self,
-        sql_strings: list[str],
-        checks: list,
-    ) -> list[InvalidCols]:
+        sql_strings: List[str],
+        checks: List[Callable[[List[sqlglot.expressions.Column]], InvalidCols]],
+    ) -> Dict[str, List[InvalidCols]]:
         """Evaluate whether the column(s) supplied in a series of SQL strings
         exist in our raw data.
 
@@ -115,7 +115,9 @@ class InvalidColValidator(SettingsValidator):
         Args:
             sql_strings (list[str]): A list of valid SQL strings
             checks (list[function]): The functions used to check the parsed
-                sql string. These can be: `clean_and_return_missing_columns`,
+                sql string. They take a list of sqlglot.expressions.Column
+                and return InvalidCols.
+                These can be: `clean_and_return_missing_columns`,
                 `validate_table_names` and `validate_column_suffixes`
 
         Returns:

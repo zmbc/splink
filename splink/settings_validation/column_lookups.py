@@ -242,9 +242,9 @@ class InvalidColumnsLogger(InvalidColValidator):
 
         return invalid_col_tracker
 
-    def construct_generic_settings_log_string(self, constructor_dict) -> str:
+    def construct_generic_settings_log_string(self, constructor_dict) -> None:
         if not constructor_dict:
-            return ""
+            return
 
         settings_id, InvCols = constructor_dict
         output_warning = [
@@ -271,9 +271,9 @@ class InvalidColumnsLogger(InvalidColValidator):
 
         return "\n".join(log_str)
 
-    def construct_blocking_rule_log_strings(self, invalid_brs):
+    def construct_blocking_rule_log_strings(self, invalid_brs) -> None:
         if not invalid_brs:
-            return ""
+            return
 
         # `invalid_brs` are in the format of:
         # {
@@ -291,9 +291,9 @@ class InvalidColumnsLogger(InvalidColValidator):
         output_warning.append(self.log_invalid_warnings_within_sql(invalid_brs))
         logger.warning("\n".join(output_warning))
 
-    def construct_comparison_level_log_strings(self, invalid_cls) -> str:
+    def construct_comparison_level_log_strings(self, invalid_cls) -> None:
         if not invalid_cls:
-            return ""
+            return
 
         # `invalid_cls` is made up of a tuple containing:
         # 1) The `output_column_name` for the level, if it exists

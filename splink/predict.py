@@ -66,7 +66,17 @@ def predict_from_comparison_vectors_sqls(
         threshold_expr = ""
 
     if settings_obj._sql_dialect == "duckdb":
-        order_by_statement = "order by 1"
+        # Triggers parallelisation see
+        # https://github.com/duckdb/duckdb/discussions/9710
+        if settings_obj._needs_matchkey_column:
+            # Possibly better to sort by a column
+            # that's already sorted
+            order_by_statement = "order by match_key"
+        else:
+            # Note this is order by the first column, not order
+            # by the literal value 1
+            order_by_statement = "order by 1"
+
     else:
         order_by_statement = ""
     sql = f"""
